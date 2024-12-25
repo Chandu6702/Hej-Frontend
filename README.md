@@ -1,4 +1,4 @@
-# Chat Application - Frontend
+# Hej Application - Frontend
 
 This is the **frontend** of a real-time chat application built with React and Socket.io-client.
 
