@@ -1,66 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { useFriendStore } from '../store/useFriendStore';
+
+import React, { useState, useEffect } from "react";
+import { useFriendStore } from "../store/useFriendStore";
+import UsersList from "./UsersList";
 
 const Search = () => {
     const [searchQuery, setSearchQuery] = useState("");
-    const [debounceTimeout, setDebounceTimeout] = useState(null);
-    const { searchedUsers, searchUsers } = useFriendStore();
+
+    const {
+        searchedUsers,
+        searchUsers,
+        isSearching,
+    } = useFriendStore();
 
     const handleSearch = (e) => {
-        const query = e.target.value;
-        setSearchQuery(query);
-
-        if (debounceTimeout) {
-            clearTimeout(debounceTimeout);
-        }
-
-        const newTimeout = setTimeout(() => {
-            searchUsers(query);
-        }, 300);
-
-        setDebounceTimeout(newTimeout);
+        setSearchQuery(e.target.value);
     };
 
+    // Debounced search
+    useEffect(() => {
+        const query = searchQuery.trim();
+
+        if (!query) {
+            useFriendStore.setState({
+                searchedUsers: [],
+            });
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            searchUsers(query);
+        }, 400);
+
+        return () => clearTimeout(timeout);
+
+    }, [searchQuery, searchUsers]);
+
     return (
-        <>
-            {/* Search Bar */}
-            <div className="mb-4">
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={handleSearch}
-                    placeholder="Search users"
-                    className="input input-bordered w-full"
-                />
-            </div>
+        <div className="mb-4">
+
+            {/* Search Input */}
+            <input
+                type="text"
+                value={searchQuery}
+                onChange={handleSearch}
+                placeholder="Search users..."
+                className="input input-bordered w-full"
+            />
 
             {/* Search Results */}
-            {searchedUsers.map((user) => (
-                <div
-                    key={user._id}
-                    className="w-full p-3 flex justify-between items-center gap-3 hover:bg-base-300 transition-colors"
-                >
-                    <div className="flex items-center gap-3">
-                        <img
-                            src={user?.profilePic || "/avatar.png"}
-                            alt={user?.fullName || "User"}
-                            className="size-12 object-cover rounded-full"
+            {searchQuery.trim() && (
+                <div className="mt-3">
+
+                    {isSearching && (
+                        <p className="text-center text-gray-500 py-3">
+                            Searching...
+                        </p>
+                    )}
+
+                    {!isSearching && searchedUsers.length === 0 && (
+                        <p className="text-center text-gray-500 py-3">
+                            No users found.
+                        </p>
+                    )}
+
+                    {!isSearching && searchedUsers.map((user) => (
+                        <UsersList
+                            key={user._id}
+                            user={user}
                         />
-                        <div className="text-left">
-                            <div className="font-medium truncate">
-                                {user?.fullName || "Unknown User"}
-                            </div>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => sendFriendRequest(user._id)}
-                        className="btn btn-primary btn-sm"
-                    >
-                        Send Request
-                    </button>
+                    ))}
+
                 </div>
-            ))}
-        </>
+            )}
+
+        </div>
     );
 };
 
